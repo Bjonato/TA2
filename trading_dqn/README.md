@@ -18,7 +18,16 @@ This folder contains a simple DQN day trading agent trained on OHLCV data.
    ```bash
    python -m trading_dqn.train --data path/to/data.csv --timesteps 50000 --min_trades 5
    ```
-   Training progress prints the current step every 1000 iterations.
+   Additional options allow filtering the CSV by date range and setting how often
+   progress statistics are shown:
+   ```bash
+   python -m trading_dqn.train \
+       --data path/to/data.csv \
+       --start-date 2024-10-01 \
+       --end-date 2024-10-11 \
+       --eval-freq 2000
+   ```
+   Training progress prints epoch statistics every `eval-freq` steps.
 
 4. After training, the script evaluates the agent once and prints:
    - total trades
