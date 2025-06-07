@@ -3,11 +3,11 @@ import pandas as pd
 from stable_baselines3 import DQN
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import DummyVecEnv
-# allow execution from repository root
+
 from .trading_env import TradingEnv
 
 class TrainLogger(BaseCallback):
-    """Callback that prints periodic training statistics."""
+    """Callback printing evaluation statistics during training."""
 
     def __init__(self, eval_env, eval_freq=1000, verbose=1):
         super().__init__(verbose)
@@ -33,17 +33,8 @@ class TrainLogger(BaseCallback):
             )
         return True
 
-
 def load_data(path: str, start_date: str | None = None, end_date: str | None = None) -> pd.DataFrame:
-    """Load OHLCV data from CSV allowing optional preamble lines.
-
-    The user's data files may contain descriptive header rows above the actual
-    column names (e.g. "BarTp,Trade,,," etc.).  We scan the file for the first
-    line containing the OHLCV column names and instruct pandas to use it as the
-    header.
-    """
-
-    # Find the line that contains the column names
+    """Load OHLCV data from CSV allowing optional preamble lines."""
     header_row = 0
     with open(path, "r") as f:
         for i, line in enumerate(f):
@@ -51,7 +42,6 @@ def load_data(path: str, start_date: str | None = None, end_date: str | None = N
             if all(k in lower for k in ["open", "close", "high", "low", "volume"]):
                 header_row = i
                 break
-
     df = pd.read_csv(path, header=header_row)
     df = df.dropna()
     if 'Dates' in df.columns:
@@ -62,7 +52,6 @@ def load_data(path: str, start_date: str | None = None, end_date: str | None = N
             df = df[df['Dates'] <= pd.to_datetime(end_date)]
         df = df.reset_index(drop=True)
     return df
-
 
 def main():
     parser = argparse.ArgumentParser(description="Train DQN trading agent")
@@ -101,3 +90,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
