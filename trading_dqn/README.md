@@ -9,7 +9,10 @@ This folder contains a simple DQN day trading agent trained on OHLCV data.
    pip install stable-baselines3 gym pandas numpy ta tqdm
    ```
 
-2. Prepare your CSV data file with columns `Date`, `Open`, `Close`, `High`, `Low`, `Volume`.
+2. Prepare your CSV data file.  It may include a few descriptive lines before the
+   actual column names (e.g. "BarTp,Trade,,," etc.).  The loader scans for the
+   first line containing the columns `Dates`, `Open`, `Close`, `High`, `Low` and
+   `Volume` and reads the data from there.
 
 3. Train the agent (run as a module):
    ```bash

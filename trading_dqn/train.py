@@ -18,7 +18,24 @@ class TrainLogger(BaseCallback):
 
 
 def load_data(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path)
+    """Load OHLCV data from CSV allowing optional preamble lines.
+
+    The user's data files may contain descriptive header rows above the actual
+    column names (e.g. "BarTp,Trade,,," etc.).  We scan the file for the first
+    line containing the OHLCV column names and instruct pandas to use it as the
+    header.
+    """
+
+    # Find the line that contains the column names
+    header_row = 0
+    with open(path, "r") as f:
+        for i, line in enumerate(f):
+            lower = line.lower()
+            if all(k in lower for k in ["open", "close", "high", "low", "volume"]):
+                header_row = i
+                break
+
+    df = pd.read_csv(path, header=header_row)
     df = df.dropna()
     return df
 
