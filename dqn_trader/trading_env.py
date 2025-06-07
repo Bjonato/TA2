@@ -86,4 +86,3 @@ class TradingEnv(gym.Env):
 
     def render(self, mode='human'):
         print(f"Step: {self.index} Price: {self.df.loc[self.index, 'Close']} Positions: {len(self.positions)}")
-
