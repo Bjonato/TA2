@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 
 class TradingEnv(gym.Env):
-    """A simple trading environment for OHLCV data."""
+    """Trading environment for OHLCV data with buy/sell/hold actions."""
 
     metadata = {"render.modes": ["human"]}
 
     def __init__(self, df: pd.DataFrame, commission: float = 0.0005, min_trades: int = 1):
         super().__init__()
-        assert set(['Open', 'High', 'Low', 'Close', 'Volume']).issubset(df.columns), "Missing columns"
+        assert set(['Open', 'High', 'Low', 'Close', 'Volume']).issubset(df.columns), 'Missing OHLCV columns'
         self.df = df.reset_index(drop=True)
         self.commission = commission
         self.min_trades = min_trades
@@ -26,19 +26,12 @@ class TradingEnv(gym.Env):
         self.wins = 0
         self.total_reward = 0.0
         self.risk_rewards = []
-        self.start_price = self.df.loc[self.index, 'Close']
         return self._get_observation(), {}
 
     def _get_observation(self):
         row = self.df.loc[self.index]
         obs = row[['Open', 'High', 'Low', 'Close', 'Volume']].astype(np.float32).to_numpy()
         return obs
-
-    def _get_portfolio_value(self, price):
-        value = 0.0
-        for p in self.positions:
-            value += price - p
-        return value
 
     def step(self, action):
         done = False
@@ -85,3 +78,4 @@ class TradingEnv(gym.Env):
 
     def render(self, mode='human'):
         print(f"Step: {self.index} Price: {self.df.loc[self.index, 'Close']} Positions: {len(self.positions)}")
+
