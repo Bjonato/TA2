@@ -43,14 +43,24 @@ def load_data(path: str, start_date: str | None = None, end_date: str | None = N
                 header_row = i
                 break
     df = pd.read_csv(path, header=header_row)
-    df = df.dropna()
+
+    # Clean up potential artefacts such as '#NAME?' rows
     if 'Dates' in df.columns:
-        df['Dates'] = pd.to_datetime(df['Dates'])
-        if start_date:
-            df = df[df['Dates'] >= pd.to_datetime(start_date)]
-        if end_date:
-            df = df[df['Dates'] <= pd.to_datetime(end_date)]
-        df = df.reset_index(drop=True)
+        df = df[df['Dates'].astype(str).str.lower() != '#name?']
+        df['Dates'] = pd.to_datetime(df['Dates'], errors='coerce')
+    numeric_cols = ['Open', 'Close', 'High', 'Low', 'Volume']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    df = df.dropna(subset=['Dates'] + numeric_cols)
+
+    if start_date:
+        df = df[df['Dates'] >= pd.to_datetime(start_date)]
+    if end_date:
+        df = df[df['Dates'] <= pd.to_datetime(end_date)]
+
+    df = df.reset_index(drop=True)
     return df
 
 def main():
