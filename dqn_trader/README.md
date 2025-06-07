@@ -9,7 +9,7 @@ This folder contains a simple Deep Q-Network (DQN) agent for day trading based o
    pip install stable-baselines3 gym pandas numpy ta tqdm
    ```
 
-2. Prepare your CSV data file. It may include a descriptive preamble before the column names (e.g. "BarTp,Trade,,," etc.). The loader will automatically locate the line containing `Dates`, `Open`, `Close`, `High`, `Low` and `Volume`.
+2. Prepare your CSV data file. It may include a descriptive preamble before the column names (e.g. "BarTp,Trade,,," etc.). The loader automatically locates the header row and removes stray values such as `#NAME?` so the data can be parsed properly. Each record must provide `Dates`, `Open`, `Close`, `High`, `Low` and `Volume`.
 
 3. Train the agent:
    ```bash
