@@ -19,9 +19,9 @@ class TrainLogger(BaseCallback):
         if self.n_calls % self.eval_freq == 0:
             self.epoch += 1
             obs = self.eval_env.reset()
-            done = False
+            done = [False]
             info = {}
-            while not done:
+            while not done[0]:
                 action, _states = self.model.predict(obs, deterministic=True)
                 obs, reward, done, infos = self.eval_env.step(action)
                 info = infos[0]
@@ -67,15 +67,31 @@ def main():
     parser = argparse.ArgumentParser(description="Train DQN trading agent")
     parser.add_argument("--data", type=str, required=True, help="Path to CSV file")
     parser.add_argument("--timesteps", type=int, default=10000)
-    parser.add_argument("--min_trades", type=int, default=1)
+    parser.add_argument("--min_trades", type=int, default=30)
+    parser.add_argument("--commission", type=float, default=0.0005)
+    parser.add_argument("--position-limit", type=int, default=5)
     parser.add_argument("--start-date", type=str, default=None, help="Filter data from this date (inclusive)")
     parser.add_argument("--end-date", type=str, default=None, help="Filter data up to this date (inclusive)")
     parser.add_argument("--eval-freq", type=int, default=1000, help="Steps between progress evaluations")
     args = parser.parse_args()
 
     df = load_data(args.data, start_date=args.start_date, end_date=args.end_date)
-    env = DummyVecEnv([lambda: TradingEnv(df, min_trades=args.min_trades)])
-    eval_env = DummyVecEnv([lambda: TradingEnv(df, min_trades=args.min_trades)])
+    env = DummyVecEnv([
+        lambda: TradingEnv(
+            df,
+            commission=args.commission,
+            min_trades=args.min_trades,
+            position_limit=args.position_limit,
+        )
+    ])
+    eval_env = DummyVecEnv([
+        lambda: TradingEnv(
+            df,
+            commission=args.commission,
+            min_trades=args.min_trades,
+            position_limit=args.position_limit,
+        )
+    ])
 
     model = DQN('MlpPolicy', env, verbose=1, tensorboard_log="runs")
     model.learn(
@@ -86,9 +102,9 @@ def main():
 
     # evaluate on the full dataset once more
     obs = eval_env.reset()
-    done = False
+    done = [False]
     info = {}
-    while not done:
+    while not done[0]:
         action, _states = model.predict(obs, deterministic=True)
         obs, reward, done, infos = eval_env.step(action)
         info = infos[0]
@@ -100,4 +116,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

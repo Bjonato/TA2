@@ -4,16 +4,24 @@ import numpy as np
 import pandas as pd
 
 class TradingEnv(gym.Env):
-    """Trading environment for OHLCV data with buy/sell/hold actions."""
+    """Trading environment for OHLCV data with buy/sell/hold actions.
+
+    The agent can open multiple positions up to ``position_limit`` and pays a
+    small ``commission`` on each buy and sell. When the episode ends, any
+    remaining positions are closed automatically. A penalty is applied if the
+    total number of completed trades is below ``min_trades``.
+    """
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, df: pd.DataFrame, commission: float = 0.0005, min_trades: int = 1):
+    def __init__(self, df: pd.DataFrame, commission: float = 0.0005,
+                 min_trades: int = 1, position_limit: int = 5):
         super().__init__()
         assert set(['Open', 'High', 'Low', 'Close', 'Volume']).issubset(df.columns), 'Missing OHLCV columns'
         self.df = df.reset_index(drop=True)
         self.commission = commission
         self.min_trades = min_trades
+        self.position_limit = position_limit
         self.action_space = spaces.Discrete(3)  # 0 = hold, 1 = buy, 2 = sell
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
         self.reset()
@@ -38,7 +46,7 @@ class TradingEnv(gym.Env):
         price = self.df.loc[self.index, 'Close']
         reward = 0.0
 
-        if action == 1:  # buy
+        if action == 1 and len(self.positions) < self.position_limit:  # buy
             self.positions.append(price * (1 + self.commission))
         elif action == 2 and self.positions:
             buy_price = self.positions.pop(0)
@@ -78,4 +86,3 @@ class TradingEnv(gym.Env):
 
     def render(self, mode='human'):
         print(f"Step: {self.index} Price: {self.df.loc[self.index, 'Close']} Positions: {len(self.positions)}")
-
