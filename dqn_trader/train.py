@@ -68,8 +68,16 @@ def main():
     parser.add_argument("--data", type=str, required=True, help="Path to CSV file")
     parser.add_argument("--timesteps", type=int, default=10000)
     parser.add_argument("--min_trades", type=int, default=30)
+    parser.add_argument("--max-trades", type=int, default=300)
+    parser.add_argument("--trade-penalty", type=float, default=1.0)
     parser.add_argument("--commission", type=float, default=0.0005)
     parser.add_argument("--position-limit", type=int, default=5)
+    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--buffer-size", type=int, default=50000)
+    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--gamma", type=float, default=0.99)
+    parser.add_argument("--exploration-fraction", type=float, default=0.2)
+    parser.add_argument("--exploration-final-eps", type=float, default=0.02)
     parser.add_argument("--start-date", type=str, default=None, help="Filter data from this date (inclusive)")
     parser.add_argument("--end-date", type=str, default=None, help="Filter data up to this date (inclusive)")
     parser.add_argument("--eval-freq", type=int, default=1000, help="Steps between progress evaluations")
@@ -81,7 +89,9 @@ def main():
             df,
             commission=args.commission,
             min_trades=args.min_trades,
+            max_trades=args.max_trades,
             position_limit=args.position_limit,
+            trade_penalty=args.trade_penalty,
         )
     ])
     eval_env = DummyVecEnv([
@@ -89,11 +99,24 @@ def main():
             df,
             commission=args.commission,
             min_trades=args.min_trades,
+            max_trades=args.max_trades,
             position_limit=args.position_limit,
+            trade_penalty=args.trade_penalty,
         )
     ])
 
-    model = DQN('MlpPolicy', env, verbose=1, tensorboard_log="runs")
+    model = DQN(
+        'MlpPolicy',
+        env,
+        verbose=1,
+        tensorboard_log="runs",
+        learning_rate=args.learning_rate,
+        buffer_size=args.buffer_size,
+        batch_size=args.batch_size,
+        gamma=args.gamma,
+        exploration_fraction=args.exploration_fraction,
+        exploration_final_eps=args.exploration_final_eps,
+    )
     model.learn(
         total_timesteps=args.timesteps,
         callback=TrainLogger(eval_env, eval_freq=args.eval_freq)

@@ -9,19 +9,23 @@ class TradingEnv(gym.Env):
     The agent can open multiple positions up to ``position_limit`` and pays a
     small ``commission`` on each buy and sell. When the episode ends, any
     remaining positions are closed automatically. A penalty is applied if the
-    total number of completed trades is below ``min_trades``.
+    total number of completed trades falls outside the range specified by
+    ``min_trades`` and ``max_trades``.
     """
 
     metadata = {"render.modes": ["human"]}
 
     def __init__(self, df: pd.DataFrame, commission: float = 0.0005,
-                 min_trades: int = 1, position_limit: int = 5):
+                 min_trades: int = 1, max_trades: int | None = None,
+                 position_limit: int = 5, trade_penalty: float = 1.0):
         super().__init__()
         assert set(['Open', 'High', 'Low', 'Close', 'Volume']).issubset(df.columns), 'Missing OHLCV columns'
         self.df = df.reset_index(drop=True)
         self.commission = commission
         self.min_trades = min_trades
         self.position_limit = position_limit
+        self.max_trades = max_trades
+        self.trade_penalty = trade_penalty
         self.action_space = spaces.Discrete(3)  # 0 = hold, 1 = buy, 2 = sell
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
         self.reset()
@@ -74,7 +78,9 @@ class TradingEnv(gym.Env):
                 if buy_price != 0:
                     self.risk_rewards.append(pnl / abs(buy_price - price))
             if self.total_trades < self.min_trades:
-                reward -= (self.min_trades - self.total_trades)
+                reward -= (self.min_trades - self.total_trades) * self.trade_penalty
+            if self.max_trades is not None and self.total_trades > self.max_trades:
+                reward -= (self.total_trades - self.max_trades) * self.trade_penalty
         obs = self._get_observation() if not done else np.zeros(5, dtype=np.float32)
         info = {
             'trades': self.total_trades,

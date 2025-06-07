@@ -17,19 +17,23 @@ This folder contains a simple Deep Q-Network (DQN) agent for day trading based o
    ```
    Additional options allow filtering by date range and setting how often training progress is printed:
    ```bash
-   python -m dqn_trader.train \
-       --data path/to/data.csv \
-       --start-date 2024-10-01 \
-       --end-date 2024-10-11 \
-       --eval-freq 2000 \
-       --commission 0.0005 \
-       --position-limit 5
+    python -m dqn_trader.train \
+        --data path/to/data.csv \
+        --start-date 2024-10-01 \
+        --end-date 2024-10-11 \
+        --eval-freq 2000 \
+        --commission 0.0005 \
+        --position-limit 5 \
+       --max-trades 300 \
+       --trade-penalty 1.0
    ```
-   The additional parameters allow you to control the commission paid on each
-   trade and the maximum number of open positions during training. The
-   environment penalizes the agent if it completes fewer than `min_trades`
-   per dataset iteration. Training progress prints epoch statistics every
-   `eval-freq` steps.
+    The additional parameters allow you to control the commission paid on each
+    trade, the maximum number of open positions, and the target range of trades.
+    The environment penalizes the agent if it completes fewer than
+    `min_trades` or exceeds `max_trades` in a single dataset pass. Training
+    progress prints epoch statistics every `eval-freq` steps. Key DQN
+    hyperparameters such as learning rate and exploration settings can also be
+    overridden via command line flags.
 
 4. After training, the script evaluates the agent once and prints:
    - total trades
