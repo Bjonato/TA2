@@ -49,4 +49,3 @@ This folder contains a simple Deep Q-Network (DQN) agent for day trading based o
    - total PnL
 
 The trained model is saved as `dqn_trading.zip` in the working directory.
-
