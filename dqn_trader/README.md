@@ -6,7 +6,7 @@ This folder contains a simple Deep Q-Network (DQN) agent for day trading based o
 
 1. Install requirements (already included in this repo):
    ```bash
-   pip install stable-baselines3 gym pandas numpy ta tqdm
+   pip install stable-baselines3 gym pandas numpy ta tqdm matplotlib
    ```
 
 2. Prepare your CSV data file. It may include a descriptive preamble before the column names (e.g. "BarTp,Trade,,," etc.). The loader automatically locates the header row and removes stray values such as `#NAME?` so the data can be parsed properly. Each record must provide `Dates`, `Open`, `Close`, `High`, `Low` and `Volume`.
@@ -47,5 +47,17 @@ This folder contains a simple Deep Q-Network (DQN) agent for day trading based o
    - win rate
    - average risk/reward
    - total PnL
+
+## Testing a saved model
+
+Use the separate `test.py` script to evaluate the saved weights on a
+different CSV file and visualise trading decisions:
+
+```bash
+python -m dqn_trader.test --data path/to/test.csv --model dqn_trading.zip
+```
+This command prints total trades, win rate, average risk/reward, total PnL,
+and the biggest win and loss. A chart showing the price action with buy and
+sell markers is displayed at the end.
 
 The trained model is saved as `dqn_trading.zip` in the working directory.

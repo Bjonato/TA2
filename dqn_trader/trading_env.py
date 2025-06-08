@@ -31,6 +31,7 @@ class TradingEnv(gym.Env):
         self.trade_bonus = trade_bonus
         self.force_min_trades = force_min_trades
         self.max_passes = max_passes
+        self.trade_pnls = []
         self.action_space = spaces.Discrete(3)  # 0 = hold, 1 = buy, 2 = sell
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
         self.reset()
@@ -44,6 +45,7 @@ class TradingEnv(gym.Env):
         self.wins = 0
         self.total_reward = 0.0
         self.risk_rewards = []
+        self.trade_pnls = []
         return self._get_observation(), {}
 
     def _get_observation(self):
@@ -64,6 +66,7 @@ class TradingEnv(gym.Env):
             pnl = price * (1 - self.commission) - buy_price
             reward += pnl + self.trade_bonus
             self.total_reward += pnl
+            self.trade_pnls.append(pnl)
             if pnl > 0:
                 self.wins += 1
             diff = abs(buy_price - price)
@@ -80,6 +83,7 @@ class TradingEnv(gym.Env):
                 self.total_trades += 1
                 reward += pnl + self.trade_bonus
                 self.total_reward += pnl
+                self.trade_pnls.append(pnl)
                 if pnl > 0:
                     self.wins += 1
                 diff = abs(buy_price - price)
@@ -101,7 +105,9 @@ class TradingEnv(gym.Env):
             'trades': self.total_trades,
             'wins': self.wins,
             'risk_reward': np.mean(self.risk_rewards) if self.risk_rewards else 0.0,
-            'pnl': self.total_reward
+            'pnl': self.total_reward,
+            'max_win': max(self.trade_pnls) if self.trade_pnls else 0.0,
+            'max_loss': min(self.trade_pnls) if self.trade_pnls else 0.0
         }
         return obs, reward, done, False, info
 
