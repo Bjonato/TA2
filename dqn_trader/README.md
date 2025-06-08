@@ -23,14 +23,21 @@ This folder contains a simple Deep Q-Network (DQN) agent for day trading based o
         --end-date 2024-10-11 \
         --eval-freq 2000 \
         --commission 0.0005 \
-        --position-limit 5 \
+       --position-limit 5 \
        --max-trades 300 \
-       --trade-penalty 1.0
+       --trade-penalty 1.0 \
+       --trade-bonus 0.01
+       --enforce-min-trades \
+       --max-passes 5
    ```
     The additional parameters allow you to control the commission paid on each
     trade, the maximum number of open positions, and the target range of trades.
     The environment penalizes the agent if it completes fewer than
-    `min_trades` or exceeds `max_trades` in a single dataset pass. Training
+    `min_trades` or exceeds `max_trades` in a single dataset pass. When
+    `--enforce-min-trades` is supplied, the environment will automatically
+    loop over the data up to `--max-passes` times until the minimum trade count
+    is reached. A small `trade_bonus` can also reward each completed trade.
+    Training
     progress prints epoch statistics every `eval-freq` steps. Key DQN
     hyperparameters such as learning rate and exploration settings can also be
     overridden via command line flags.

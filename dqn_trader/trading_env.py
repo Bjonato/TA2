@@ -17,7 +17,9 @@ class TradingEnv(gym.Env):
 
     def __init__(self, df: pd.DataFrame, commission: float = 0.0005,
                  min_trades: int = 1, max_trades: int | None = None,
-                 position_limit: int = 5, trade_penalty: float = 1.0):
+                 position_limit: int = 5, trade_penalty: float = 1.0,
+                 trade_bonus: float = 0.0, force_min_trades: bool = False,
+                 max_passes: int = 5):
         super().__init__()
         assert set(['Open', 'High', 'Low', 'Close', 'Volume']).issubset(df.columns), 'Missing OHLCV columns'
         self.df = df.reset_index(drop=True)
@@ -26,6 +28,9 @@ class TradingEnv(gym.Env):
         self.position_limit = position_limit
         self.max_trades = max_trades
         self.trade_penalty = trade_penalty
+        self.trade_bonus = trade_bonus
+        self.force_min_trades = force_min_trades
+        self.max_passes = max_passes
         self.action_space = spaces.Discrete(3)  # 0 = hold, 1 = buy, 2 = sell
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32)
         self.reset()
@@ -33,6 +38,7 @@ class TradingEnv(gym.Env):
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
         self.index = 0
+        self.dataset_passes = 1
         self.positions = []
         self.total_trades = 0
         self.wins = 0
@@ -56,12 +62,13 @@ class TradingEnv(gym.Env):
             buy_price = self.positions.pop(0)
             self.total_trades += 1
             pnl = price * (1 - self.commission) - buy_price
-            reward += pnl
+            reward += pnl + self.trade_bonus
             self.total_reward += pnl
             if pnl > 0:
                 self.wins += 1
-            if buy_price != 0:
-                self.risk_rewards.append(pnl / abs(buy_price - price))
+            diff = abs(buy_price - price)
+            if diff > 0:
+                self.risk_rewards.append(pnl / diff)
 
         self.index += 1
         if self.index >= len(self.df) - 1:
@@ -71,16 +78,24 @@ class TradingEnv(gym.Env):
                 buy_price = self.positions.pop(0)
                 pnl = price * (1 - self.commission) - buy_price
                 self.total_trades += 1
-                reward += pnl
+                reward += pnl + self.trade_bonus
                 self.total_reward += pnl
                 if pnl > 0:
                     self.wins += 1
-                if buy_price != 0:
-                    self.risk_rewards.append(pnl / abs(buy_price - price))
-            if self.total_trades < self.min_trades:
-                reward -= (self.min_trades - self.total_trades) * self.trade_penalty
-            if self.max_trades is not None and self.total_trades > self.max_trades:
-                reward -= (self.total_trades - self.max_trades) * self.trade_penalty
+                diff = abs(buy_price - price)
+                if diff > 0:
+                    self.risk_rewards.append(pnl / diff)
+            # optionally extend episode until min_trades is reached
+            if self.force_min_trades and self.total_trades < self.min_trades \
+                    and self.dataset_passes < self.max_passes:
+                self.index = 0
+                self.dataset_passes += 1
+                done = False
+            else:
+                if self.total_trades < self.min_trades:
+                    reward -= (self.min_trades - self.total_trades) * self.trade_penalty
+                if self.max_trades is not None and self.total_trades > self.max_trades:
+                    reward -= (self.total_trades - self.max_trades) * self.trade_penalty
         obs = self._get_observation() if not done else np.zeros(5, dtype=np.float32)
         info = {
             'trades': self.total_trades,

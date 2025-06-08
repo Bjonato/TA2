@@ -70,6 +70,11 @@ def main():
     parser.add_argument("--min_trades", type=int, default=30)
     parser.add_argument("--max-trades", type=int, default=300)
     parser.add_argument("--trade-penalty", type=float, default=1.0)
+    parser.add_argument("--trade-bonus", type=float, default=0.0)
+    parser.add_argument("--enforce-min-trades", action="store_true",
+                        help="Extend episode until min_trades is met")
+    parser.add_argument("--max-passes", type=int, default=5,
+                        help="Maximum dataset passes when enforcing trades")
     parser.add_argument("--commission", type=float, default=0.0005)
     parser.add_argument("--position-limit", type=int, default=5)
     parser.add_argument("--learning-rate", type=float, default=1e-4)
@@ -92,6 +97,9 @@ def main():
             max_trades=args.max_trades,
             position_limit=args.position_limit,
             trade_penalty=args.trade_penalty,
+            trade_bonus=args.trade_bonus,
+            force_min_trades=args.enforce_min_trades,
+            max_passes=args.max_passes,
         )
     ])
     eval_env = DummyVecEnv([
@@ -102,6 +110,9 @@ def main():
             max_trades=args.max_trades,
             position_limit=args.position_limit,
             trade_penalty=args.trade_penalty,
+            trade_bonus=args.trade_bonus,
+            force_min_trades=args.enforce_min_trades,
+            max_passes=args.max_passes,
         )
     ])
 
@@ -139,3 +150,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
