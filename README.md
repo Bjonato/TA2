@@ -2,10 +2,11 @@
 
 This repository contains utilities for reinforcement learning experiments.
 
-The `trading_dqn` folder provides a minimal example of a DQN agent for day
-trading based on OHLCV data.  Sample CSV files are located in
-`trading_dqn/data/` including one with a descriptive preamble.
+The `dqn_trader` folder provides a minimal example of a DQN agent for day
+trading based on OHLCV data. Sample CSV files are located in
+`dqn_trader/data/`.
 
 ## Folders
 
-- `trading_dqn/` – DQN agent for day trading OHLCV data. See its README for usage.
+- `dqn_trader/` – DQN agent for day trading OHLCV data. See its README for usage.
+
